@@ -105,7 +105,10 @@ async function submitOrderForm(event) {
   }
 
   // Honeypot check — field ẩn, người thật sẽ không điền — mục 11.4 PRD
-  if (document.getElementById('website').value !== '') {
+  // Tên field cố tình đặt không giống field autofill quen thuộc (address/website/company)
+  // để trình duyệt (Chrome...) không tự động điền nhầm, gây chặn oan người dùng thật.
+  const honeypotEl = document.getElementById('hp_confirm_2x9');
+  if (honeypotEl && honeypotEl.value.trim() !== '') {
     return; // im lặng bỏ qua, nghi là bot
   }
 
@@ -113,9 +116,19 @@ async function submitOrderForm(event) {
     ? event.submitter.dataset.loaiYeuCau
     : document.getElementById('loaiYeuCauHidden').value;
 
+  // Chuẩn hoá SĐT: bỏ khoảng trắng/dấu gạch, đổi +84 hoặc 84 đầu số thành 0
+  // (trình duyệt/điện thoại hay autofill số dạng +84xxxxxxxxx)
+  let soDienThoaiRaw = document.getElementById('soDienThoai').value.trim();
+  let soDienThoai = soDienThoaiRaw.replace(/[\s.-]/g, '');
+  if (soDienThoai.startsWith('+84')) {
+    soDienThoai = '0' + soDienThoai.slice(3);
+  } else if (soDienThoai.startsWith('84') && soDienThoai.length >= 10) {
+    soDienThoai = '0' + soDienThoai.slice(2);
+  }
+
   const formData = {
     hoTen: document.getElementById('hoTen').value.trim(),
-    soDienThoai: document.getElementById('soDienThoai').value.trim(),
+    soDienThoai: soDienThoai,
     email: document.getElementById('email').value.trim(),
     sanPham: document.getElementById('sanPham').value,
     loaiYeuCau: loaiYeuCau,
